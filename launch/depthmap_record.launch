@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--第一版-->
+<launch>
+       
+     <!--  <include file="$(find openni2_launch)/launch/openni2.launch"/> 
+      <include file="$(find thermalvis)/launch/optris_cal.launch"/>   
+   
+   <include file="$(find optris_drivers)/optris_drivers.launch"/>  --> 
+
+ 
+   <!--  <node pkg="rosbag" type="record" name="test_record" args="-O kintinuous4 /camera/depth/image_raw /camera/rgb/image_raw /optris/image_rect_color /optris/camera_info" />
+ --> 
+
+  <arg name="logPath" default="/home/edward/catkin_ws/src/posegraphcode"/>
+  <arg name="logName" default="mapdata"/>
+ <node pkg="rosbag" type="record" name="rosbag" output= "screen" args="--split --size=1024 -o $(arg logPath)/$(arg logName) /camera/depth/points_filter /vins_estimator/camera_pose"/>
+   
+   
+</launch>

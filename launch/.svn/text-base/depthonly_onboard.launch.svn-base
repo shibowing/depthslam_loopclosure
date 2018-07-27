@@ -1,0 +1,63 @@
+<!-- 
+Zheng Fang: 28 May. 2013
+
+This launch file is for depth only odometry esitmation using icp method.
+
+-->
+
+<!-- /home/fang/fuerte_workspace/bagfiles/kinect_ship_test2.bag 
+
+-->
+
+<launch>
+	<!-- Random Sampling Filter : /random_sample_filter/cloud-->
+	<node pkg="pcl17_filtering" type="random_sampling_filter" name="random_sampling_filter" output="screen" 
+		args="input:=/camera/depth_registered/points" >
+		<param name="sampleNum" value="4000" />
+	</node>
+	
+	<!-- Calculate the Odometry using ICP -->
+	<node pkg="depthOdometry" type="depthOdometry" name="depthOdometry" output="screen"  
+		args="input_cloud:=/random_sample_filter/cloud">
+		<!-- Frame to Frame or Local Map-->
+		<param name="useMap"               type="bool"     value="true"/>
+		<param name="localMapNum"      	   type="int"      value="3000"/>
+		
+		<!-- Normal Space Sampling Parameters-->
+		<param name="useNormalSampling"    type="bool"     value="true"/>
+		<param name="selectedPtNum"        type="int"      value="2000"/>
+		
+		<!-- ICP Parameters-->
+		<param name="setMaxCorresDist"     type="double"   value="0.3"/>
+		<param name="setMaxIterationNum"   type="int"      value="50"/>
+		<param name="setTransEpsilon"      type="double"   value="1e-8"/>
+	</node>	
+    
+	
+	<node pkg="accumulate_odom" name="accumulator_rgbd" type="accumulator_drift">
+		<remap from="/input/odom" to="do_measurement"/>
+		<remap from="/accumulated/odom" to="RGBD/accumulated/odom"/>
+		<param name="start_frame" type="string" value="world"/>
+		<param name="last_frame" type="string" value="asus"/>
+	</node>
+	
+	<node name="asus_tf" pkg="odomToTF" type="odomTFConverter">
+		<remap from="odom" to="RGBD/accumulated/odom" />
+	</node>
+	
+	<node name="base_tf" pkg="odomToTF" type="tf2odomConverter">
+		<param name="source_frame" type="string" value="world"/>
+		<param name="target_frame" type="string" value="asus"/>
+		<remap from="odom" to="/RGBD/odometry" />
+	</node> 
+
+	<!-- Show DO Path -->
+	<node pkg="hector_trajectory_server" type="hector_trajectory_server" name="hector_trajectory_server1" output="screen">
+			<param name="target_frame_name" type="string" value="/world" />
+			<param name="source_frame_name" type="string" value="/asus" />
+			<param name="trajectory_update_rate" type="double" value="10" />
+			<param name="trajectory_publish_rate" type="double" value="10" />
+			<remap from="trajectory" to="/DOTrajectory"/>
+	</node>
+	
+</launch>

@@ -1,0 +1,28 @@
+<!--xml-->
+<launch>
+    <param name="use_sim_time" value="true"/>
+
+    <arg name="localpath" default="/home/machozhao/dataset"/>
+
+    <node pkg="rosbag" type="play" name="rosbag" args="-r 1.0 -s 0
+		$(arg localpath)/111/1.bag
+                $(arg localpath)/111/2.bag
+                $(arg localpath)/111/3.bag  --clock ">
+    </node>
+
+ 
+    <node pkg="nodelet" type="nodelet" name="depth2cloud" args="standalone depth_image_proc/point_cloud_xyz">
+        <remap from="/camera_info" to="/camera/depth_registered/camera_info"/>
+        <remap from="/image_rect" to="/camera/depth_registered/image_raw"/>
+        <remap from="points" to="/velodyne_points"/>
+    </node>
+
+
+    <!-- Random Sampling Filter : /random_sample_filter/cloud-->
+    <!--node pkg="pcl_filtering" type="random_filter" name="random_filter" output="screen"
+          args="input:=/camera/depth/points2" >
+          <param name="sampleNum" value="4000" />
+    </node-->
+
+</launch>
+
