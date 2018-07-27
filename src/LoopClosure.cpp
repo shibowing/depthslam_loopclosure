@@ -8,8 +8,8 @@
 #include <visualization_msgs/Marker.h>
 #include <g2o/core/robust_kernel_factory.h>
 
-g2o::SparseOptimizer LocalOptimizer;  // 最后用的就是这个东东
-g2o::SparseOptimizer GlobalOptimizer;  // 最后用的就是这个东东
+g2o::SparseOptimizer LocalOptimizer;
+g2o::SparseOptimizer GlobalOptimizer;
 vector<Pose> PoseafterG2o;
 
 typedef std::pair<Pose, Pose> EdgePair;
@@ -86,7 +86,6 @@ namespace DEPTH_MAP {
 
         Find_Loop = false;
 
-        // first_posegraph=true;
         n.param<string>("fixed_frame_id_", fixed_frame_id_, "world");
         n.param<int>("odometryEdge_informationPos", odometryEdge_informationPos, 4000);
         n.param<int>("odometryEdge_informationAngle", odometryEdge_informationAngle, 100);
@@ -114,7 +113,7 @@ namespace DEPTH_MAP {
     }
 
     LoopClosure::~LoopClosure() {
-        // GlobalKeyframePtr;
+
     }
 
 
@@ -193,7 +192,6 @@ namespace DEPTH_MAP {
         ROS_DEBUG("begin the loop detection!!!");
         ROS_DEBUG("the size of keyframe [%d]", GlobalKeyframePtr->KeyFrameDatabase2.size());
 
-        //默认设置是80帧以后才能开始闭环检测
         if (GlobalKeyframePtr->KeyFrameDatabase2.size() > skip_recent_poses &&
             GlobalKeyframePtr->KeyFrameDatabase2.size() > 320) {
             for (vector<KeyFrame2>::iterator it = GlobalKeyframePtr->KeyFrameDatabase2.end() - skip_recent_poses;
@@ -329,18 +327,6 @@ namespace DEPTH_MAP {
 
         }
 
-//        pcl::copyPointCloud(*OptimizedGlobalCloud, *RemoveOutlier);
-//        pcl::PointCloud<pcl::PointXYZ> afterRemove;
-//        pcl::StatisticalOutlierRemoval<pcl::PointXYZ> remove;
-//        remove.setInputCloud(RemoveOutlier);
-//        remove.setMeanK(50);
-//        remove.setStddevMulThresh(1.0);
-//        remove.filter(afterRemove);
-//
-//        pcl::PointCloud<pcl::PointNormal>::Ptr ptCloud(new pcl::PointCloud<pcl::PointNormal>);
-//        pcl::copyPointCloud(afterRemove, *OptimizedGlobalCloud);
-
-
         ROS_DEBUG("Publish Optimized Globalmap!");
         sensor_msgs::PointCloud2 OptimizedGlobalMapCloudMsg;
         pcl::toROSMsg(*OptimizedGlobalCloud, OptimizedGlobalMapCloudMsg);
@@ -357,7 +343,6 @@ namespace DEPTH_MAP {
 
     }
 
-    //读取一帧的数据
     KeyFrame2 LoopClosure::ReadCurrFrame(int index, vector<KeyFrame2> &CurrFrameVec, EDGE_SELECT LoopEdge) {
         KeyFrame2 frame;
         for (vector<KeyFrame2>::iterator it = CurrFrameVec.begin(); it != CurrFrameVec.end(); it++) {
@@ -419,8 +404,6 @@ namespace DEPTH_MAP {
         // edge->setRobustKernel(new g2o::RobustKernelHuber());
         //    edge->setRobustKernel(creator->construct());
         //  edge->robustKernel()->setDelta(1.0);
-
-
         // 信息矩阵
         Eigen::Matrix<double, 6, 6> information = Eigen::Matrix<double, 6, 6>::Identity();
         // 信息矩阵是协方差矩阵的逆，表示我们对边的精度的预先估计
@@ -442,40 +425,43 @@ namespace DEPTH_MAP {
                       << std::endl;
         }
         if (LoopEdge == GLOBAL) {
+
             /*************************储存闭环帧*****************************************/
-//            ostringstream file1, file2;
-//            file1 << f1.FrameID << ".pcd";
-//            file2 << f2.FrameID << ".pcd";
-//            pcl::io::savePCDFileASCII("/home/machozhao/catkin_ws/src/IRON_loopclosure/doc/" + file1.str(), f1.KeyframePoint);
-//            pcl::io::savePCDFileASCII("/home/machozhao/catkin_ws/src/IRON_loopclosure/doc/" + file2.str(), f2.KeyframePoint);
+  /*         ostringstream file1, file2;
+            file1 << f1.FrameID << ".pcd";
+           file2 << f2.FrameID << ".pcd";
+            pcl::io::savePCDFileASCII("/home/machozhao/catkin_ws/src/IRON_loopclosure/doc/" + file1.str(), f1.KeyframePoint);
+            pcl::io::savePCDFileASCII("/home/machozhao/catkin_ws/src/IRON_loopclosure/doc/" + file2.str(), f2.KeyframePoint); */
+
             /*************************使用NDT算法完成粗匹配*****************************************/
             Transform = TransformPtr->NDT_CalculateTransform(f1.NDTmap, f2.NDTmap, f1.FrameID, f2.FrameID);
             cout << "NDT_Matching.inlierset:" << TransformPtr->inlierset.size() << endl;
             /*************************使用NDT算法完成粗匹配*****************************************/
             if (TransformPtr->inlierset.size() > 8) {
+
                 /*************************NDT算法的位姿估计作为ICP的初值*****************************************/
-                //  Transform = GlobalKeyframePtr->GICP_CalculateTransform(f1.KeyframePoint, f2.KeyframePoint,Transform);
-                // Transform = GlobalKeyframePtr->GICP_CalculateTransform(f1.KeyframePoint, f2.KeyframePoint,Transform);
-//                Transform << 0.998478, 0.0532848, 0.0142382, -0.031649,
-//                        -0.0539252, 0.997332, 0.0491921, -0.681233,
-//                        -0.0115792, -0.0498852, 0.998688, -0.214574,
-//                        0, 0, 0, 1;
+                /* Transform = GlobalKeyframePtr->GICP_CalculateTransform(f1.KeyframePoint, f2.KeyframePoint,Transform);
+                 Transform = GlobalKeyframePtr->GICP_CalculateTransform(f1.KeyframePoint, f2.KeyframePoint,Transform);
+                Transform << 0.998478, 0.0532848, 0.0142382, -0.031649,
+                        -0.0539252, 0.997332, 0.0491921, -0.681233,
+                        -0.0115792, -0.0498852, 0.998688, -0.214574,
+                       0, 0, 0, 1;                                                                       */
 
                 Transform = GlobalKeyframePtr->pairAlign(f1.KeyframePoint, f2.KeyframePoint, Transform);
                 /*****************f1.KeyframePoint=matched point/f2.KeyframePoint=current  *************************************/
-//                pcl::PointCloud< pcl::PointNormal > Alignresult;
-//                pcl::transformPointCloud(f2.KeyframePoint, Alignresult, Transform);
-//                Alignresult += f1.KeyframePoint;
-//                ostringstream  file1,file2;
-//                file1 << f1.FrameID << ".pcd";
-//                file2 << f2.FrameID << "_";
-//                pcl::io::savePCDFileASCII("/home/machozhao/catkin_ws/src/IRON_loopclosure/doc/" + file2.str()+file1.str(),   Alignresult);
-//                Alignresult.clear();
+                /*                pcl::PointCloud< pcl::PointNormal > Alignresult;
+                         pcl::transformPointCloud(f2.KeyframePoint, Alignresult, Transform);
+                         Alignresult += f1.KeyframePoint;
+                         ostringstream  file1,file2;
+                         file1 << f1.FrameID << ".pcd";  file2 << f2.FrameID << "_";
+                         pcl::io::savePCDFileASCII("/home/machozhao/catkin_ws/src/IRON_loopclosure/doc/" + file2.str()+file1.str(),   Alignresult);
+                         Alignresult.clear();                                   */
             }
 
         }
-        Eigen::Matrix4f Trans_Cur2Last;  //描述的是当前帧到历史的keyframeDatabase最后一帧的transform
-        Eigen::Matrix4d Trans_Cur2Last2;    //只是想转换成double格式
+
+        Eigen::Matrix4f Trans_Cur2Last;
+        Eigen::Matrix4d Trans_Cur2Last2;
         if (GlobalKeyframePtr->gicp_FitnessScore < 0.1) {
 
             cout << "add edge fist step!" << endl;

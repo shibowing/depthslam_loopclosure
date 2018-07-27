@@ -68,10 +68,6 @@ namespace DEPTH_MAP {
              it != KeyFrameDatabase2.end(); it++) {
             KeyFrame2 frame;
             frame.FrameID = it->FrameID;
-            //保证LocalFrameID标号都在1-10之间，目的是为了g2o顶点哈奥进行优化
-            //第一次 //1,2,3,4,5,6,7,8,9,10,11,12
-            //第二次     1 2 3 4 5 6 7 8 9 10 （重新标号）
-            //第三次       1 2 3 4 5 6 7 8 9 10
             if (it < KeyFrameDatabase2.end() - LocalKeyframeID) {
 
                 ROS_DEBUG("it->LocalFrameID :[%d] ", it->LocalFrameID);
@@ -91,7 +87,6 @@ namespace DEPTH_MAP {
             ROS_DEBUG("The frame.LocalFrameID [%d]:", frame.LocalFrameID);
         }
 
-        //    ROS_DEBUG("The size of[%d] LocalKeyframeDatabase",LocalKeyframeDatabase.size());
         return LocalKeyframeDatabase;
     }
 
@@ -184,20 +179,12 @@ namespace DEPTH_MAP {
         PointCloudWithNormals::Ptr reg_result = points_with_normals_src;
         reg.setMaximumIterations(2);
         for (int i = 0; i < 50; ++i) {
-
-            // save cloud for visualization purpose
             points_with_normals_src = reg_result;
-
-            // Estimate
             reg.setInputSource(points_with_normals_src);
             reg.align(*reg_result);
 
-            //accumulate transformation between each Iteration
             Ti = reg.getFinalTransformation() * Ti;
 
-            //if the difference between this transformation and the previous one
-            //is smaller than the threshold, refine the process by reducing
-            //the maximal correspondence distance
             if (fabs((reg.getLastIncrementalTransformation() - prev).sum()) < reg.getTransformationEpsilon())
                 reg.setMaxCorrespondenceDistance(reg.getMaxCorrespondenceDistance() - 0.001);
             prev = reg.getLastIncrementalTransformation();
@@ -207,38 +194,6 @@ namespace DEPTH_MAP {
         cout << "fitness_score:" << reg.getFitnessScore() << endl;
         gicp_FitnessScore = reg.getFitnessScore();
 
-//        int  vp_2(0);
-//        p = new pcl::visualization::PCLVisualizer("Pairwise Incremental Registration example");
-//        p->createViewPort(0.5, 0, 1.0, 1.0, vp_2);
-//
-//        // Get the transformation from target to source
-//
-//
-//        //
-//        // Transform target back in source frame
-//        pcl::transformPointCloud(*tgt, *output, targetToSource);
-//
-//        p->removePointCloud("source");
-//        p->removePointCloud("target");
-//
-//        PointCloudColorHandlerCustom<PointT> cloud_tgt_h(output, 0, 255, 0);
-//        PointCloudColorHandlerCustom<PointT> cloud_src_h(src, 255, 0, 0);
-//
-//        p->addPointCloud(output, cloud_tgt_h, "target", vp_2);
-//        p->addPointCloud(src, cloud_src_h, "source", vp_2);
-//
-//
-//
-//            p->spinOnce();
-//            boost::this_thread::sleep (boost::posix_time::microseconds (100000));
-//            system("pause");
-//
-//        p->removePointCloud("source");
-//        p->removePointCloud("target");
-//
-//        //add the source to the transformed target
-//        *output += *src;
-
         return targetToSource;
     }
 
@@ -246,15 +201,15 @@ namespace DEPTH_MAP {
     Eigen::Matrix3d KeyframeDatabase::euler2RotationMatrix(const double yaw, const double pitch, const double roll) {
         Eigen::AngleAxisd rotation_vectorZ(yaw, Eigen::Vector3d(0, 0, 1));     //沿 Z 轴旋转 90 度
         cout.precision(4);
-        cout << "rotation matrixZ =\n" << rotation_vectorZ.matrix() << endl;                //用matrix()转换成矩阵
+        cout << "rotation matrixZ =\n" << rotation_vectorZ.matrix() << endl;   //用matrix()转换成矩阵
 
         Eigen::AngleAxisd rotation_vectorY(pitch, Eigen::Vector3d(0, 1, 0));     //沿 Y 轴旋转 90 度
         cout.precision(4);
-        cout << "rotation matrixY =\n" << rotation_vectorY.matrix() << endl;                //用matrix()转换成矩阵
+        cout << "rotation matrixY =\n" << rotation_vectorY.matrix() << endl;    //用matrix()转换成矩阵
 
         Eigen::AngleAxisd rotation_vectorX(roll, Eigen::Vector3d(1, 0, 0));     //沿 X 轴旋转 90 度
         cout.precision(4);
-        cout << "rotation matrixX =\n" << rotation_vectorX.matrix() << endl;                //用matrix()转换成矩阵
+        cout << "rotation matrixX =\n" << rotation_vectorX.matrix() << endl;    //用matrix()转换成矩阵
 
         Eigen::Matrix3d Total_rotation_matrix;
         Total_rotation_matrix = rotation_vectorX.matrix() * rotation_vectorY.matrix() * rotation_vectorZ.matrix();

@@ -267,8 +267,6 @@ namespace DEPTH_MAP {
 
 
         }
-
-        //delete TransformPtr;
     }
 
 
@@ -447,10 +445,10 @@ void BuildGlobalmap(vector<KeyFrame2> &KeyFrameDatabase2) {
     pcl::PointCloud<pcl::PointNormal>::Ptr VoxelCloud(new pcl::PointCloud<pcl::PointNormal>);
     pcl::PointCloud<pcl::PointNormal>::Ptr TransCloud(new pcl::PointCloud<pcl::PointNormal>);
     pcl::PointCloud<pcl::PointNormal>::Ptr VoxelGlobalCloud(new pcl::PointCloud<pcl::PointNormal>);
-    pcl::VoxelGrid<pcl::PointNormal> voxel; // 网格滤波器，调整地图分辨率
-    pcl::PassThrough<pcl::PointNormal> pass; // z方向区间滤波器，由于rgbd相机的有效深度区间有限，把太远的去掉
+    pcl::VoxelGrid<pcl::PointNormal> voxel;
+    pcl::PassThrough<pcl::PointNormal> pass;
     pass.setFilterFieldName("z");
-    pass.setFilterLimits(0.0, 4.5); //4m以上就不要了
+    pass.setFilterLimits(0.0, 4.5);
     voxel.setLeafSize(0.03, 0.03, 0.03);
     ros::WallTime startTime3 = ros::WallTime::now();
     cout << "GlobalKeyframePtr->KeyFrameDatabase2.size():" << KeyFrameDatabase2.size() << endl;
@@ -458,10 +456,9 @@ void BuildGlobalmap(vector<KeyFrame2> &KeyFrameDatabase2) {
     for (size_t i = 0; i < KeyFrameDatabase2.size(); i = i + 3) {
 
         pcl::copyPointCloud(KeyFrameDatabase2[i].KeyframePoint, *OptCloud);
-        /**开始滤波**/
+
         pass.setInputCloud(OptCloud);
         pass.filter(*PassCloud);
-        // 把点云变换后加入全局地图中
         voxel.setInputCloud(PassCloud);
         voxel.filter(*VoxelCloud);
         pcl::transformPointCloud(*VoxelCloud, *TransCloud, OptimizedPose[i + 3]);
